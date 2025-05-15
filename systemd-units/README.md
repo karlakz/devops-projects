@@ -1,8 +1,8 @@
 # Systemd Hands-on Lab
 
-This lab shows how to create and manage a custom service
+This lab shows how to create and manage a `timestamp.service` custom service. It will include practical tasks like creating a script, writing unit files, enabling services, and checking logs.
 
-## Create a script and make it executable
+## Create a Script
 
 1. Create a script `timestamp.sh` under the directory `/usr/local/bin`:
 
@@ -72,12 +72,38 @@ The lab places `timestamp.sh` in `/usr/local/bin/` because it’s a standard dir
 
 If your script cannot be executed properly by systemd directly, there might be an issue with systemd execution environment. Systemd runs services in a minimal environment with a limited `PATH` and no shell context. When `ExecStart=/usr/local/bin/timestamp.sh` is used, systemd relies on the script’s shebang (`#!/usr/bin/env bash`) to find the interpreter. However, systemd’s restricted environment might not have access to `/usr/bin/env` or the correct `PATH` to resolve bash. Therefore, specifying `ExecStart=/bin/bash  /usr/local/bin/timestamp.sh` explicitly invokes the Bash interpreter, bypassing the issue.
 
-2. Reload systemd to recognize the new unit and restart it:
+2. Reload systemd to recognize the new unit and start it:
 
 ```
 sudo systemctl daemon-reload
-sudo systemctl restart timestamp.service
+sudo systemctl start timestamp.service
 systemctl status timestamp.service
 ```
 
-If it’s running you will see `Active: active (running)` status
+If it’s running you will see `Active: active (running)` status.
+
+## Check Systemd Logs
+
+1. Systemd logs can reveal if the service is running or failing. Run the command to view the logs:
+
+```
+journalctl -u timestamp.service -b
+```
+
+The `-b` flag limits logs to the current boot.  
+If your user (vagrant in this case) lacks permissions to view systemd logs it is because not being in the `adm` or `systemd-journal` groups. This is standard on Ubuntu for non-privileged users.
+
+2. Add vagrant to the `systemd-journal` Group
+
+```
+sudo usermod -aG systemd-journal vagrant
+```
+
+3. Log out and back in:
+
+```
+exit
+vagrant ssh
+```
+
+Group changes require a new session. Exit your Vagrant SSH session and reconnect:
